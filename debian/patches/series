@@ -2,3 +2,9 @@
 02_disable-bypass-lan.patch
 03_systemd-service.patch
 04_disable-libtls-tests.patch
+0205-ike-Adhere-to-IKE_SA-limit-when-checking-out-by-conf.patch
+1001-charon-add-optional-source-and-remote-overrides-for-.patch
+1002-vici-send-certificates-for-ike-sa-events.patch
+1003-vici-add-support-for-individual-sa-state-changes.patch
+1004-vyos-terminate-connections-source-dest.patch
+1005-vyos-set-logging-for-rsyslog.patch

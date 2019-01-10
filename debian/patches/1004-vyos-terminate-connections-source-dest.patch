@@ -1,0 +1,66 @@
+--- a/src/libcharon/plugins/vici/vici_control.c	2019-01-09 12:47:53.000000000 +0100
++++ b/src/libcharon/plugins/vici/vici_control.c	2019-01-09 12:59:49.896797648 +0100
+@@ -223,12 +223,13 @@
+ 	private_vici_control_t *this, char *name, u_int id, vici_message_t *request)
+ {
+ 	enumerator_t *enumerator, *isas, *csas;
+-	char *child, *ike, *errmsg = NULL;
++	char *child, *ike, *errmsg = NULL, *my_host_str, *other_host_str;
+ 	u_int child_id, ike_id, current, *del, done = 0;
+ 	bool force;
+ 	int timeout;
+ 	ike_sa_t *ike_sa;
+ 	child_sa_t *child_sa;
++	host_t *my_host = NULL, *other_host = NULL;
+ 	array_t *ids;
+ 	vici_builder_t *builder;
+ 	controller_cb_t log_cb = NULL;
+--- a/src/swanctl/commands/terminate.c	2019-01-09 11:50:56.000000000 +0100
++++ b/src/swanctl/commands/terminate.c	2019-01-09 12:59:49.896797648 +0100
+@@ -37,7 +37,7 @@
+ 	vici_req_t *req;
+ 	vici_res_t *res;
+ 	command_format_options_t format = COMMAND_FORMAT_NONE;
+-	char *arg, *child = NULL, *ike = NULL;
++	char *arg, *child = NULL, *ike = NULL, *my_host = NULL, *other_host = NULL;
+ 	int ret = 0, timeout = 0, level = 1, child_id = 0, ike_id = 0;
+ 	bool force = FALSE;
+ 
+@@ -74,6 +74,12 @@
+ 			case 'l':
+ 				level = atoi(arg);
+ 				continue;
++			case 'S':
++				my_host = arg;
++				continue;
++			case 'R':
++				other_host = arg;
++				continue;
+ 			case EOF:
+ 				break;
+ 			default:
+@@ -109,6 +115,14 @@
+ 	{
+ 		vici_add_key_valuef(req, "force", "yes");
+ 	}
++	if (my_host)
++	{
++		vici_add_key_valuef(req, "my-host", "%s", my_host);
++	}
++	if (other_host)
++	{
++		vici_add_key_valuef(req, "other-host", "%s", other_host);
++	}
+ 	if (timeout)
+ 	{
+ 		vici_add_key_valuef(req, "timeout", "%d", timeout * 1000);
+@@ -155,6 +169,8 @@
+ 		{
+ 			{"help",		'h', 0, "show usage information"},
+ 			{"child",		'c', 1, "terminate by CHILD_SA name"},
++			{"source",		'S', 1, "override source address"},
++			{"remote",		'R', 1, "override remote address"},
+ 			{"ike",			'i', 1, "terminate by IKE_SA name"},
+ 			{"child-id",	'C', 1, "terminate by CHILD_SA reqid"},
+ 			{"ike-id",		'I', 1, "terminate by IKE_SA unique identifier"},
+
