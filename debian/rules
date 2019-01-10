@@ -65,9 +65,7 @@ endif
 ifeq ($(DEB_HOST_ARCH_OS),linux)
 	# only enable network-manager and capabilities dropping on linux hosts
 	# some plugins are linux-only too
-	CONFIGUREARGS += --enable-nm \
-		--with-nm-ca-dir=/etc/ssl/certs \
-		--with-capabilities=libcap \
+	CONFIGUREARGS += --with-capabilities=libcap \
 		--enable-farp \
 		--enable-dhcp \
 		--enable-af-alg \
