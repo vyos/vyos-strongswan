@@ -1,6 +1,7 @@
---- a/src/libcharon/plugins/vici/vici_control.c	2019-01-09 12:47:53.000000000 +0100
-+++ b/src/libcharon/plugins/vici/vici_control.c	2019-01-09 12:59:49.896797648 +0100
-@@ -223,12 +223,13 @@
+diff -ru a/src/libcharon/plugins/vici/vici_control.c b/src/libcharon/plugins/vici/vici_control.c
+--- a/src/libcharon/plugins/vici/vici_control.c	2019-01-14 12:13:40.000000000 +0100
++++ b/src/libcharon/plugins/vici/vici_control.c	2019-01-14 13:37:26.367382864 +0100
+@@ -268,12 +268,13 @@
  	private_vici_control_t *this, char *name, u_int id, vici_message_t *request)
  {
  	enumerator_t *enumerator, *isas, *csas;
@@ -15,8 +16,51 @@
  	array_t *ids;
  	vici_builder_t *builder;
  	controller_cb_t log_cb = NULL;
---- a/src/swanctl/commands/terminate.c	2019-01-09 11:50:56.000000000 +0100
-+++ b/src/swanctl/commands/terminate.c	2019-01-09 12:59:49.896797648 +0100
+@@ -289,12 +290,23 @@
+ 	force = request->get_bool(request, FALSE, "force");
+ 	timeout = request->get_int(request, 0, "timeout");
+ 	log.level = request->get_int(request, 1, "loglevel");
++	my_host_str = request->get_str(request, NULL, "my-host");
++	other_host_str = request->get_str(request, NULL, "other-host");
+ 
+-	if (!child && !ike && !ike_id && !child_id)
++	if (!child && !ike && !ike_id && !child_id && !my_host_str &&!other_host_str)
+ 	{
+ 		return send_reply(this, "missing terminate selector");
+ 	}
+-
++	if (my_host_str && !other_host_str || other_host_str && !my_host_str)
++	{
++		return send_reply(this, "missing source or remote");
++	}
++	else
++	{
++		my_host = host_create_from_string(my_host_str, 0);
++		other_host = host_create_from_string(other_host_str, 0);
++		DBG1(DBG_CFG, "vici terminate with source me %H and other %H", my_host, other_host);
++	}
+ 	if (ike_id)
+ 	{
+ 		DBG1(DBG_CFG, "vici terminate IKE_SA #%d", ike_id);
+@@ -357,6 +369,15 @@
+ 		{
+ 			array_insert(ids, ARRAY_TAIL, &ike_id);
+ 		}
++		else if (my_host && other_host)
++		{
++			if (my_host && !streq(my_host, ike_sa->get_my_host(ike_sa)) && other_host && !streq(other_host, ike_sa->get_other_host(ike_sa)))
++			{
++				continue;
++			}
++			current = ike_sa->get_unique_id(ike_sa);
++			array_insert(ids, ARRAY_TAIL, &current);
++		}
+ 	}
+ 	isas->destroy(isas);
+ 
+diff -ru a/src/swanctl/commands/terminate.c b/src/swanctl/commands/terminate.c
+--- a/src/swanctl/commands/terminate.c	2019-01-14 11:16:46.000000000 +0100
++++ b/src/swanctl/commands/terminate.c	2019-01-14 14:03:12.119459847 +0100
 @@ -37,7 +37,7 @@
  	vici_req_t *req;
  	vici_res_t *res;
@@ -63,4 +107,3 @@
  			{"ike",			'i', 1, "terminate by IKE_SA name"},
  			{"child-id",	'C', 1, "terminate by CHILD_SA reqid"},
  			{"ike-id",		'I', 1, "terminate by IKE_SA unique identifier"},
-
