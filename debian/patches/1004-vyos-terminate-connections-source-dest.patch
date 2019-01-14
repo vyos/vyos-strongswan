@@ -48,7 +48,7 @@ diff -ru a/src/libcharon/plugins/vici/vici_control.c b/src/libcharon/plugins/vic
  		}
 +		else if (my_host && other_host)
 +		{
-+			if (my_host && !streq(my_host, ike_sa->get_my_host(ike_sa)) && other_host && !streq(other_host, ike_sa->get_other_host(ike_sa)))
++			if (!my_host->ip_equals(my_host, ike_sa->get_my_host(ike_sa)) || !other_host->ip_equals(other_host, ike_sa->get_other_host(ike_sa)))
 +			{
 +				continue;
 +			}
