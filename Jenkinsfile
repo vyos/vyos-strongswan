@@ -74,6 +74,7 @@ pipeline {
         docker {
             args '--sysctl net.ipv6.conf.lo.disable_ipv6=0 -e GOSU_UID=1006 -e GOSU_GID=1006'
             image 'vyos/vyos-build:current'
+            alwaysPull true
         }
     }
     options {
@@ -100,7 +101,17 @@ pipeline {
                         def commitId = sh(returnStdout: true, script: 'git rev-parse --short=11 HEAD').trim()
                         currentBuild.description = sprintf('Git SHA1: %s', commitId[-11..-1])
 
-                        sh 'dpkg-buildpackage -b -us -uc -tc'
+                        sh '''
+                            dpkg-buildpackage -b -us -uc -tc
+                            # Build python3-vici package
+                            autoreconf -i
+                            ./configure --enable-python-eggs
+                            cwd=$(pwd)
+                            cd src/libcharon/plugins/vici/python
+                            make
+                            python3 setup.py --command-packages=stdeb.command bdist_deb
+                            mv ./deb_dist/*.deb ${cwd}/..
+                        '''
                     }
                 }
             }
@@ -122,9 +133,6 @@ pipeline {
                         // every option over and over again!
 
                         def VYOS_REPO_PATH = '/home/sentrium/web/dev.packages.vyos.net/public_html/repositories/' + getGitBranchName() + '/'
-                        if (getGitBranchName() != "equuleus")
-                            VYOS_REPO_PATH += 'vyos/'
-
                         def SSH_OPTS = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR'
                         def SSH_REMOTE = 'khagen@10.217.48.113'
 
